@@ -1,0 +1,36 @@
+#http://jlordiales.me/2015/04/01/consul-template/
+
+consul:
+  image: progrium/consul
+  container_name: consul
+  ports:
+    - "8400:8400"
+    - "8500:8500"
+    - "8600:53/udp"
+  hostname: consul
+# replace 10.211.55.8 with your vm IP
+  command: -server -advertise 10.211.55.8 -bootstrap
+
+registrator:
+  image: gliderlabs/registrator
+  container_name: registrator
+  net: "host"
+  volumes:
+    - "/var/run/docker.sock:/tmp/docker.sock"
+# replace 10.211.55.8 with your vm IP
+  command: -ip 10.211.55.8 consul://10.211.55.8:8500
+
+pyservice:
+  image: jlordiales/python-micro-service
+  ports:
+    - "5000"
+
+nginx:
+  image: jlordiales/nginx-consul
+  container_name: nginx
+  ports:
+    - "8080:80"
+  volumes:
+    - "$PWD/nginx.ctmpl:/templates/service.ctmpl"
+  links:
+    - "consul:consul"
